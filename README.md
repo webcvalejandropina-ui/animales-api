@@ -1,170 +1,28 @@
-# API educativa de animales aleatorios.
+# API de animales aleatorios gratis con FastAPI, SQLite y base de datos pública.
 
-API mínima, autocontenida y lista para ejecutar en local que devuelve un animal aleatorio desde una base de datos SQLite pública incluida en el propio repositorio.
+Si buscas una API de animales aleatorios que sea rápida, gratis, fácil de ejecutar y lista para integrarse en una web, este proyecto es una muy buena base.
 
-El objetivo del proyecto es educativo:
-- mostrar una API pequeña y fácil de entender.
-- enseñar una estructura backend simple con FastAPI.
-- trabajar con una base SQLite ya preparada y versionada.
-- ofrecer una demo reproducible sin depender de servicios externos.
+Está pensada para demos, proyectos educativos, portfolios, experimentos de frontend, widgets, juegos, pruebas de producto y cualquier caso en el que quieras obtener un animal aleatorio con descripción, curiosidad e imagen en base64 sin depender de servicios de pago.
 
-## Qué resuelve este proyecto.
+## Por qué esta API mola tanto.
 
-La API expone un único recurso útil:
+- Es gratis de ejecutar en local.
+- No necesita API keys.
+- No depende de terceros en tiempo de ejecución.
+- Incluye la base de datos pública dentro del propio proyecto.
+- Devuelve imágenes en base64 listas para usar en cliente.
+- Está montada con FastAPI y SQLite, así que es fácil de entender y mantener.
+- Se levanta en pocos minutos con Python o Docker.
+
+## Qué devuelve.
+
+Endpoint principal:
 
 ```text
 GET /animal-aleatorio
 ```
 
-Cada petición devuelve un animal distinto con:
-- nombre.
-- enlace de referencia.
-- descripción.
-- curiosidad educativa.
-- imagen en base64 lista para incrustar en una web.
-
-También incluye:
-
-```text
-GET /health
-```
-
-para comprobar que la API y la base están listas.
-
-## Base de datos pública incluida.
-
-Este repositorio incluye la base completa en formato comprimido en:
-
-```text
-api/animales.db.zip
-```
-
-Puntos clave:
-- la base forma parte del proyecto y debe subirse al repositorio.
-- la versión publicada es `zip`, para que el archivo resulte más fácil de compartir y revisar.
-- la aplicación la expande automáticamente al primer arranque.
-- no se descarga en tiempo de ejecución.
-- no hace falta ninguna API key.
-- no hace falta conexión externa para que la app funcione una vez construida.
-- cualquiera puede clonar el repositorio y ejecutarlo en local.
-
-La política de versionado está preparada para:
-- subir `api/animales.db.zip`.
-- ignorar la copia expandida `api/animales.db` que se genera localmente.
-- excluir artefactos temporales en `.gitignore`.
-
-### Por qué la base va en zip.
-
-La base original sin comprimir ocupa aproximadamente `107 MB`.
-
-La copia publicada en `zip`:
-- reduce el tamaño del repo.
-- mantiene el proyecto autocontenido.
-- deja la base pública dentro del repositorio.
-- facilita compartir el dataset principal de la app como un único archivo.
-
-## Origen de los datos.
-
-El conjunto base de datos procede de Wikipedia y Wikimedia Commons:
-- `nombre`, `url` y `descripcion` se apoyan en registros de Wikipedia en español.
-- `url_imagen` apunta a imágenes alojadas en Wikimedia Commons.
-- `img_b64` es una representación embebible derivada de esas imágenes.
-- `curiosidades` se presenta como capa educativa asociada al animal dentro de la base final del proyecto.
-
-Si reutilizas el contenido fuera de este proyecto, revisa siempre la atribución y la licencia del recurso original en su página de Wikipedia o Wikimedia Commons.
-
-## Licencia y reutilización.
-
-Este repositorio debe entenderse así:
-- el código de la app se publica con finalidad educativa.
-- la base de datos incluida es pública dentro del propio repositorio.
-- los datos de referencia proceden de Wikipedia y Wikimedia Commons.
-- el hecho de reunir esos datos en este proyecto no sustituye la licencia original de cada recurso.
-- el texto, las páginas y las imágenes deben reutilizarse atendiendo siempre a la licencia y a la atribución indicadas en su origen.
-
-En otras palabras:
-- este proyecto no publica datos privados.
-- este proyecto no reclama una licencia única nueva sobre todos los contenidos de terceros.
-- la forma correcta de reutilización es revisar siempre la página de origen del recurso correspondiente.
-
-## Estado actual del dataset.
-
-La base incluida contiene:
-- 2239 animales.
-- 2239 filas con `url`.
-- 2239 filas con `descripcion`.
-- 2239 filas con `img_b64`.
-- 2239 filas con `curiosidades`.
-- 2174 filas con `url_imagen`.
-
-Nota importante:
-- `url_imagen` debe considerarse opcional.
-- la imagen utilizable para cliente es `img_b64`, que sí está completa en toda la base.
-
-## Archivos que sí deben subirse.
-
-Para publicar este proyecto de forma mínima y correcta, los archivos necesarios son:
-
-```text
-README.md
-.gitignore
-api/.dockerignore
-api/Dockerfile
-api/animales.db.zip
-api/docker-compose.yml
-api/requirements.txt
-api/app/__init__.py
-api/app/database.py
-api/app/main.py
-```
-
-No hace falta subir:
-- `api/animales.db` expandida localmente.
-- entornos virtuales.
-- logs.
-- caches.
-- artefactos temporales.
-
-## Estructura del proyecto.
-
-```text
-.
-├── README.md
-├── .gitignore
-└── api
-    ├── .dockerignore
-    ├── Dockerfile
-    ├── animales.db.zip
-    ├── docker-compose.yml
-    ├── requirements.txt
-    └── app
-        ├── __init__.py
-        ├── database.py
-        └── main.py
-```
-
-## Diseño técnico.
-
-El proyecto está intencionadamente simplificado:
-- una sola API.
-- una sola base SQLite.
-- un solo endpoint funcional.
-- validación fuerte en el arranque.
-- superficie pequeña para mantenimiento y aprendizaje.
-
-La aplicación:
-- expande automáticamente `api/animales.db.zip` a `api/animales.db` en el primer arranque, si hace falta.
-- abre la base en modo solo lectura.
-- valida que la tabla exista.
-- valida que no esté vacía.
-- valida que todas las filas tengan `curiosidades`.
-- valida que todas las filas tengan `img_b64`.
-
-Si alguna de esas comprobaciones falla, la API no arranca.
-
-## Respuesta de la API.
-
-Ejemplo de respuesta:
+Respuesta pública:
 
 ```json
 {
@@ -178,24 +36,89 @@ Ejemplo de respuesta:
 }
 ```
 
-### Significado de cada campo.
+Además incluye:
 
-- `id`: identificador interno en SQLite.
-- `nombre`: nombre principal del animal.
-- `url`: enlace informativo del registro.
-- `url_imagen`: URL original de la imagen cuando está disponible.
-- `descripcion`: resumen corto del animal.
-- `img_b64`: imagen codificada en base64, lista para mostrar en cliente.
-- `curiosidades`: texto corto de orientación educativa.
+```text
+GET /health
+```
+
+para comprobar que la API y la base están listas.
+
+## Para quién encaja especialmente bien.
+
+Esta API de animales aleatorios es ideal para:
+- portfolios.
+- landing pages interactivas.
+- mini apps educativas.
+- juegos y trivias.
+- proyectos de aula.
+- pruebas de producto.
+- demos de FastAPI.
+- integraciones frontend que quieran contenido visual sin coste.
+
+## Base de datos pública incluida en el repo.
+
+La base principal se publica en este archivo:
+
+```text
+api/animales.db.zip
+```
+
+Eso significa que:
+- la base forma parte real del producto.
+- no hace falta descargar nada desde fuera al montar el proyecto.
+- cualquier persona puede clonar el repo y ejecutarlo.
+- la app expande el archivo `zip` automáticamente cuando necesita la SQLite local.
+
+### Qué contiene la base.
+
+La base actual incluye:
+- 2239 animales.
+- 2239 filas con `url`.
+- 2239 filas con `descripcion`.
+- 2239 filas con `img_b64`.
+- 2239 filas con `curiosidades`.
+- 2174 filas con `url_imagen`.
+
+Nota importante:
+- `url_imagen` debe tratarse como campo opcional.
+- `img_b64` sí está completa en toda la base y es la mejor opción para frontend.
+
+## Origen de los datos.
+
+El dataset base procede de Wikipedia y Wikimedia Commons.
+
+En concreto:
+- `nombre`, `url` y `descripcion` se apoyan en registros de Wikipedia en español.
+- `url_imagen` apunta a recursos alojados en Wikimedia Commons.
+- `img_b64` se obtiene a partir de esas imágenes.
+- `curiosidades` se presenta como capa divulgativa asociada a cada animal dentro de la base final del proyecto.
+
+## Licencia y reutilización del contenido.
+
+Este repositorio deja claro lo siguiente:
+- el código de la app se comparte con finalidad educativa y práctica.
+- la base de datos incluida es pública dentro del proyecto.
+- los datos de referencia proceden de Wikipedia y Wikimedia Commons.
+- este proyecto no sustituye la licencia original de cada página, texto o imagen.
+- la reutilización correcta siempre pasa por revisar la licencia y la atribución del recurso original en su fuente.
+
+En resumen:
+- no se publican datos privados.
+- no se afirma una licencia única nueva sobre todo el contenido de terceros.
+- el uso responsable exige respetar la atribución del recurso original.
+
+## Stack técnico.
+
+- FastAPI.
+- SQLite.
+- Docker.
+- Docker Compose.
+- Python 3.9 o superior.
 
 ## Cómo ejecutarlo en local.
 
-### Opción 1: Python.
-
-Requisitos:
-- Python 3.9 o superior.
-
-Pasos:
+### Opción 1. Python.
 
 ```bash
 cd api
@@ -205,12 +128,11 @@ pip install -r requirements.txt
 uvicorn app.main:app --host 127.0.0.1 --port 13008
 ```
 
-Accesos:
+### Opción 2. Docker.
 
-```text
-http://127.0.0.1:13008/health
-http://127.0.0.1:13008/animal-aleatorio
-http://127.0.0.1:13008/docs
+```bash
+cd api
+docker compose up --build
 ```
 
 Puerto por defecto:
@@ -219,35 +141,48 @@ Puerto por defecto:
 13008
 ```
 
-### Opción 2: Docker.
-
-```bash
-cd api
-docker compose up --build
-```
-
-Nombre unificado en Docker:
+URLs locales:
 
 ```text
-Proyecto Compose: alex-alimales-api
-Servicio Compose: alex-alimales-api
-Imagen: alex-alimales-api
-Contenedor: alex-alimales-api
+http://127.0.0.1:13008/health
+http://127.0.0.1:13008/animal-aleatorio
+http://127.0.0.1:13008/docs
 ```
 
-## Verificación rápida.
+## Archivos importantes del proyecto.
 
-Comprobar salud:
-
-```bash
-curl http://127.0.0.1:13008/health
+```text
+README.md
+api/Dockerfile
+api/animales.db.zip
+api/docker-compose.yml
+api/requirements.txt
+api/app/__init__.py
+api/app/database.py
+api/app/main.py
 ```
 
-Pedir un animal aleatorio:
+## Cómo se comporta la app al arrancar.
 
-```bash
-curl http://127.0.0.1:13008/animal-aleatorio
-```
+La aplicación:
+- expande `api/animales.db.zip` a `api/animales.db` si hace falta.
+- abre la SQLite en modo solo lectura.
+- valida que la tabla exista.
+- valida que la base no esté vacía.
+- valida que todas las filas tengan `curiosidades`.
+- valida que todas las filas tengan `img_b64`.
+
+Si alguna de esas comprobaciones falla, la API no arranca.
+
+## Por qué es una base brutal para construir producto.
+
+Porque combina varias cosas que normalmente cuestan tiempo:
+- contenido listo para enseñar.
+- imágenes listas para renderizar.
+- estructura backend simple.
+- coste cero en local.
+- integración rápida con cualquier frontend.
+- dataset ya empaquetado dentro del repo.
 
 ## Uso de `img_b64` en frontend.
 
@@ -263,18 +198,8 @@ JavaScript:
 const imageSrc = buildImageSrc(animal.img_b64)
 ```
 
-## Archivos principales.
+## Resumen.
 
-- `api/app/main.py`: API FastAPI y endpoints públicos.
-- `api/app/database.py`: apertura, expansión y validación de la base SQLite.
-- `api/animales.db.zip`: base pública incluida en el repositorio.
-- `api/docker-compose.yml`: arranque local con nombre final unificado.
-- `api/Dockerfile`: imagen lista para construir.
+Esta API de animales aleatorios es una solución pequeña, potente, gratis y muy fácil de reutilizar.
 
-## Recomendación de uso.
-
-Este proyecto es especialmente útil para:
-- demos.
-- pruebas locales.
-- ejemplos educativos de FastAPI.
-- proyectos frontend que necesiten un endpoint simple y sin dependencias externas.
+Si quieres una base pública con animales, FastAPI, SQLite, Docker y una integración sencilla para frontend, aquí tienes un producto realmente bueno para arrancar rápido.
