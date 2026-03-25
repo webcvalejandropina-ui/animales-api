@@ -9,14 +9,17 @@ dependencias externas en tiempo de ejecucion:
 
 from __future__ import annotations
 
+import logging
 import sqlite3
 from contextlib import asynccontextmanager
 from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
-from app.database import ANIMAL_PUBLIC_COLUMNS, open_database
+from app.database import ANIMAL_PUBLIC_COLUMNS, REQUIRED_ANIMAL_WHERE, open_database
+
+logger = logging.getLogger(__name__)
 
 
 class Animal(BaseModel):
@@ -91,12 +94,34 @@ def animal_aleatorio() -> Dict[str, Any]:
 
     db = require_database()
     cur = db.execute(
-        f"SELECT {ANIMAL_PUBLIC_COLUMNS} FROM animales ORDER BY RANDOM() LIMIT 1"
+        " ".join(
+            [
+                f"SELECT {ANIMAL_PUBLIC_COLUMNS}",
+                "FROM animales",
+                f"WHERE {REQUIRED_ANIMAL_WHERE}",
+                "ORDER BY RANDOM()",
+                "LIMIT 25",
+            ]
+        )
     )
-    row = cur.fetchone()
-    if row is None:
-        raise HTTPException(status_code=404, detail="No hay animales en la base de datos")
-    return dict(row)
+    rows = cur.fetchall()
+    if not rows:
+        raise HTTPException(
+            status_code=503,
+            detail="No hay animales validos en la base de datos",
+        )
+
+    for row in rows:
+        payload = dict(row)
+        try:
+            return Animal.model_validate(payload).model_dump()
+        except ValidationError:
+            logger.warning("Fila descartada en /animal-aleatorio: %r", payload)
+
+    raise HTTPException(
+        status_code=503,
+        detail="No hay animales publicos validos en la base de datos",
+    )
 
 
 @app.get("/health")

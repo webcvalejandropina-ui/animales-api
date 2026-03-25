@@ -4,12 +4,13 @@ Este modulo concentra dos ideas importantes:
 - la base se abre en modo solo lectura para evitar cambios accidentales;
 - si la base versionada va comprimida, se expande automaticamente;
 - antes de aceptar peticiones se comprueba que todos los animales tienen
-  curiosidades e imagen en base64.
+  los campos publicos necesarios para la API.
 """
 
 from __future__ import annotations
 
 import os
+import shutil
 import sqlite3
 from pathlib import Path
 from zipfile import ZipFile
@@ -18,6 +19,15 @@ ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DB = ROOT / "animales.db"
 
 ANIMAL_PUBLIC_COLUMNS = "id, nombre, url, url_imagen, descripcion, img_b64, curiosidades"
+REQUIRED_ANIMAL_WHERE = """
+id IS NOT NULL
+AND
+nombre IS NOT NULL AND TRIM(nombre) != ''
+AND url IS NOT NULL AND TRIM(url) != ''
+AND descripcion IS NOT NULL AND TRIM(descripcion) != ''
+AND img_b64 IS NOT NULL AND TRIM(img_b64) != ''
+AND curiosidades IS NOT NULL AND TRIM(curiosidades) != ''
+"""
 
 
 def get_db_path() -> Path:
@@ -32,6 +42,35 @@ def _zip_path_for(db_path: Path) -> Path:
     return db_path.with_name(f"{db_path.name}.zip")
 
 
+def _looks_like_sqlite_file(db_path: Path) -> bool:
+    """Comprueba si el archivo existe y tiene cabecera valida de SQLite."""
+
+    if not db_path.is_file():
+        return False
+    if db_path.stat().st_size < 100:
+        return False
+    with db_path.open("rb") as fh:
+        return fh.read(16) == b"SQLite format 3\x00"
+
+
+def _extract_database_from_zip(zip_path: Path, db_path: Path) -> None:
+    """Extrae la base de datos de forma atomica para evitar archivos truncados."""
+
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = db_path.with_name(f"{db_path.name}.tmp")
+
+    with ZipFile(zip_path) as zf:
+        members = [name for name in zf.namelist() if name.endswith(db_path.name)]
+        if not members:
+            raise FileNotFoundError(
+                f"El zip no contiene el archivo esperado {db_path.name}: {zip_path}"
+            )
+        with zf.open(members[0]) as src, tmp_path.open("wb") as dst:
+            shutil.copyfileobj(src, dst)
+
+    tmp_path.replace(db_path)
+
+
 def ensure_database_file() -> Path:
     """Garantiza que exista la base SQLite lista para abrir.
 
@@ -40,7 +79,7 @@ def ensure_database_file() -> Path:
     """
 
     db_path = get_db_path()
-    if db_path.is_file():
+    if _looks_like_sqlite_file(db_path):
         return db_path
 
     zip_path = _zip_path_for(db_path)
@@ -50,15 +89,13 @@ def ensure_database_file() -> Path:
             f"{db_path} / {zip_path}"
         )
 
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-    with ZipFile(zip_path) as zf:
-        members = [name for name in zf.namelist() if name.endswith(db_path.name)]
-        if not members:
-            raise FileNotFoundError(
-                f"El zip no contiene el archivo esperado {db_path.name}: {zip_path}"
-            )
-        with zf.open(members[0]) as src, db_path.open("wb") as dst:
-            dst.write(src.read())
+    _extract_database_from_zip(zip_path, db_path)
+
+    if not _looks_like_sqlite_file(db_path):
+        raise ValueError(
+            "La base de datos extraida no tiene un formato SQLite valido: "
+            f"{db_path}"
+        )
 
     return db_path
 
@@ -89,33 +126,14 @@ def open_database() -> sqlite3.Connection:
         raise ValueError(f"La tabla 'animales' esta vacia: {db_path}")
 
     cur = conn.execute(
-        """
-        SELECT COUNT(*) FROM animales
-        WHERE curiosidades IS NOT NULL
-          AND TRIM(curiosidades) != ''
-        """
+        f"SELECT COUNT(*) FROM animales WHERE {REQUIRED_ANIMAL_WHERE}"
     )
-    total_curiosidades = cur.fetchone()[0]
-    if total_curiosidades != total:
+    total_validos = cur.fetchone()[0]
+    if total_validos != total:
         conn.close()
         raise ValueError(
-            "La base de datos no esta completa: faltan curiosidades en "
-            f"{total - total_curiosidades} animales ({db_path})"
-        )
-
-    cur = conn.execute(
-        """
-        SELECT COUNT(*) FROM animales
-        WHERE img_b64 IS NOT NULL
-          AND TRIM(img_b64) != ''
-        """
-    )
-    total_img_b64 = cur.fetchone()[0]
-    if total_img_b64 != total:
-        conn.close()
-        raise ValueError(
-            "La base de datos no esta completa: faltan imagenes b64 en "
-            f"{total - total_img_b64} animales ({db_path})"
+            "La base de datos no esta completa: faltan campos publicos obligatorios en "
+            f"{total - total_validos} animales ({db_path})"
         )
 
     return conn
