@@ -5,6 +5,8 @@ services:
     image: alex-alimales-api
     build: .
     container_name: alex-alimales-api
+    labels:
+      net.unraid.docker.icon: "https://raw.githubusercontent.com/webcvalejandropina-ui/animales-api/main/logo.png"
     ports:
       - "13008:13008"
     environment:
