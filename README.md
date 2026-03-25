@@ -66,13 +66,14 @@ Datos actuales de la base:
 - 2239 filas con `nombre`.
 - 2239 filas con `url`.
 - 2239 filas con `descripcion`.
-- 2239 filas con `img_b64`.
+- 2169 filas con `img_b64` valida.
 - 2239 filas con `curiosidades`.
 - 2174 filas con `url_imagen`.
 
 Punto importante:
+- la API excluye 70 filas antiguas con `img_b64` corrupta.
 - `url_imagen` es opcional.
-- `img_b64` está completa en toda la base y es la opción más fiable para frontend.
+- `img_b64` valida sigue siendo la opción más fiable para frontend.
 
 ## Fuente de datos y reutilización responsable
 
@@ -161,7 +162,7 @@ La aplicación:
 - abre la SQLite en modo solo lectura.
 - valida que la tabla exista.
 - valida que la base no esté vacía.
-- valida que todos los animales públicos tengan `id`, `nombre`, `url`, `descripcion`, `img_b64` y `curiosidades`.
+- carga solo animales públicos con `id`, `nombre`, `url`, `descripcion`, `curiosidades` e `img_b64` realmente válida.
 
 Si alguna de esas comprobaciones falla, la API no arranca.
 

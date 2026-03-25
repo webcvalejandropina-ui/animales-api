@@ -3,12 +3,15 @@
 Este modulo concentra dos ideas importantes:
 - la base se abre en modo solo lectura para evitar cambios accidentales;
 - si la base versionada va comprimida, se expande automaticamente;
-- antes de aceptar peticiones se comprueba que todos los animales tienen
-  los campos publicos necesarios para la API.
+- antes de aceptar peticiones se carga el subconjunto de animales publicos
+  que realmente tienen datos utilizables por la API.
 """
 
 from __future__ import annotations
 
+import base64
+import binascii
+import logging
 import os
 import shutil
 import sqlite3
@@ -25,9 +28,14 @@ AND
 nombre IS NOT NULL AND TRIM(nombre) != ''
 AND url IS NOT NULL AND TRIM(url) != ''
 AND descripcion IS NOT NULL AND TRIM(descripcion) != ''
-AND img_b64 IS NOT NULL AND TRIM(img_b64) != ''
 AND curiosidades IS NOT NULL AND TRIM(curiosidades) != ''
 """
+IMAGE_SIGNATURES = (
+    b"\xff\xd8\xff",
+    b"\x89PNG\r\n\x1a\n",
+)
+
+logger = logging.getLogger(__name__)
 
 
 def get_db_path() -> Path:
@@ -71,6 +79,70 @@ def _extract_database_from_zip(zip_path: Path, db_path: Path) -> None:
     tmp_path.replace(db_path)
 
 
+def normalize_img_b64(value: object) -> str:
+    """Normaliza una cadena base64 y elimina prefijos tipo data URL."""
+
+    if value is None or not isinstance(value, str):
+        return ""
+
+    cleaned = value.strip()
+    if not cleaned:
+        return ""
+
+    if cleaned.lower().startswith("data:"):
+        _, separator, tail = cleaned.partition(",")
+        cleaned = tail if separator else cleaned
+
+    return "".join(cleaned.split())
+
+
+def is_valid_image_b64(value: object) -> bool:
+    """Comprueba si la cadena es base64 valida y si decodifica a una imagen soportada."""
+
+    cleaned = normalize_img_b64(value)
+    if not cleaned:
+        return False
+
+    try:
+        raw = base64.b64decode(cleaned, validate=True)
+    except (binascii.Error, ValueError):
+        return False
+
+    return raw.startswith(IMAGE_SIGNATURES)
+
+
+def load_valid_animal_ids(conn: sqlite3.Connection) -> tuple[int, ...]:
+    """Devuelve los ids publicables y excluye filas con `img_b64` rota."""
+
+    cur = conn.execute(
+        " ".join(
+            [
+                "SELECT id, img_b64",
+                "FROM animales",
+                f"WHERE {REQUIRED_ANIMAL_WHERE}",
+            ]
+        )
+    )
+
+    valid_ids: list[int] = []
+    invalid_ids: list[int] = []
+
+    for row in cur:
+        animal_id = row["id"]
+        if isinstance(animal_id, int) and is_valid_image_b64(row["img_b64"]):
+            valid_ids.append(animal_id)
+        else:
+            invalid_ids.append(animal_id)
+
+    if invalid_ids:
+        logger.warning(
+            "Se excluyen %s animales con img_b64 invalida de la API publica",
+            len(invalid_ids),
+        )
+
+    return tuple(valid_ids)
+
+
 def ensure_database_file() -> Path:
     """Garantiza que exista la base SQLite lista para abrir.
 
@@ -101,7 +173,7 @@ def ensure_database_file() -> Path:
 
 
 def open_database() -> sqlite3.Connection:
-    """Abre y valida una base SQLite completamente preparada para produccion local."""
+    """Abre y valida la base SQLite para servir la API en modo solo lectura."""
 
     db_path = ensure_database_file()
 
@@ -125,15 +197,13 @@ def open_database() -> sqlite3.Connection:
         conn.close()
         raise ValueError(f"La tabla 'animales' esta vacia: {db_path}")
 
-    cur = conn.execute(
-        f"SELECT COUNT(*) FROM animales WHERE {REQUIRED_ANIMAL_WHERE}"
-    )
-    total_validos = cur.fetchone()[0]
-    if total_validos != total:
+    cur = conn.execute(f"SELECT COUNT(*) FROM animales WHERE {REQUIRED_ANIMAL_WHERE}")
+    total_publicables = cur.fetchone()[0]
+    if total_publicables == 0:
         conn.close()
         raise ValueError(
-            "La base de datos no esta completa: faltan campos publicos obligatorios en "
-            f"{total - total_validos} animales ({db_path})"
+            "La base de datos no contiene animales con los campos publicos minimos: "
+            f"{db_path}"
         )
 
     return conn
