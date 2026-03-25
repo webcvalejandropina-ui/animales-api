@@ -9,4 +9,4 @@ __pycache__/
 *.log
 *.zip
 *.db
-!api/animales.db.gz
+!api/animales.db.zip

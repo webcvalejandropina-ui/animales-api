@@ -9,7 +9,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app/ ./app/
-COPY animales.db.gz ./
+COPY animales.db.zip ./
 
 EXPOSE 13008
 
