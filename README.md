@@ -141,6 +141,34 @@ http://127.0.0.1:13008/animal-aleatorio
 http://127.0.0.1:13008/docs
 ```
 
+### Imagen local en `.tar`
+
+Si quieres generar una imagen local exportable, el proyecto incluye este script:
+
+```bash
+cd api
+./export-image-tar.sh
+```
+
+Eso crea este archivo:
+
+```text
+api/alex-alimales-api.tar
+```
+
+Punto importante:
+- el arranque normal recomendado sigue siendo solo con Docker Compose.
+- para levantar el proyecto desde código fuente basta con `docker compose up --build`.
+- el `.tar` es un artefacto opcional para mover la imagen a otra máquina o guardarla offline.
+
+Si más adelante quieres cargar ese `.tar` en otra máquina:
+
+```bash
+docker load -i alex-alimales-api.tar
+cd api
+docker compose up -d
+```
+
 ## Archivos clave
 
 ```text
@@ -149,6 +177,7 @@ README.md
 api/Dockerfile
 api/animales.db.zip
 api/docker-compose.yml
+api/export-image-tar.sh
 api/requirements.txt
 api/app/__init__.py
 api/app/database.py
