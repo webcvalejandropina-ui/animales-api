@@ -1,0 +1,12 @@
+**/__pycache__
+**/*.pyc
+**/*.pyo
+.git
+.gitignore
+.venv
+venv
+*.tar
+animales.db
+*.md
+docker-compose*.yml
+export-image-tar.sh

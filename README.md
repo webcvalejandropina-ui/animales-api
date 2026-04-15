@@ -102,7 +102,7 @@ https://raw.githubusercontent.com/webcvalejandropina-ui/animales-api/main/logo.p
 ```
 
 Configuración útil para Unraid:
-- nombre recomendado del contenedor: `alex-alimales-api`
+- nombre recomendado del contenedor: `animales-api`
 - puerto por defecto: `13008`
 - icono recomendado: la URL `raw` del logo
 
@@ -153,7 +153,7 @@ cd api
 Eso crea este archivo:
 
 ```text
-api/alex-alimales-api.tar
+api/animales-api.tar
 ```
 
 Punto importante:
@@ -164,7 +164,7 @@ Punto importante:
 Si más adelante quieres cargar ese `.tar` en otra máquina:
 
 ```bash
-docker load -i alex-alimales-api.tar
+docker load -i animales-api.tar
 cd api
 docker compose up -d
 ```
