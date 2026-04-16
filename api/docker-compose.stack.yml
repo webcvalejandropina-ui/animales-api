@@ -6,6 +6,8 @@ services:
     image: animales-api:latest
     pull_policy: never
     container_name: animales-api
+    labels:
+      net.unraid.docker.icon: "https://raw.githubusercontent.com/webcvalejandropina-ui/animales-api/main/logo-docker.png"
     ports:
       - "13008:13008"
     environment:
